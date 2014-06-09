@@ -1,19 +1,27 @@
 // json numeric decorder
 //
-// { "0": 4, "1": "honda", 
-//   "2": [ {"0": "italy"}, {"0": "russia"} ], 
-//   "3": {"0": "JP", "1": "FW"} } 
+// { "0": 4, "1": "honda",
+//   "2": {"0": "japan", "1": "left"},
+//   "3": [ "FW", "MF" ],
+//   "4": [ 
+//   	{"0": "holland", "1": "vvv"},
+//   	{"0": "russia",  "1": "cska"},
+//   	{"0": "italy",   "1": "milan"} ] }
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 // { "number": 4, "name": "honda", 
-//   "plays": [ {"country": "italy"}, {"country": "russia"} ], 
-//   "info": {"from": "JP", "pos": "FW"} }
+//   "info": {"from": "japan", "foot": "left"},
+//   "position": [ "FW", "MF" ], 
+//   "plays": [ 
+//   	{"country": "holland", "team": "vvv"},
+//   	{"country": "russia",  "team": "cska"},
+//   	{"country": "italy",   "team": "milan"} ] }
 
 // with node.js
-var util = (require instanceof Function) ? require("util") : (void 0);
-function p(v){ if( console instanceof Object ) { return console.log(v); } }
-function pp(v){ if( util instanceof Object ) { return p(util.inspect(v)); } }
-function pv(n,v){ if( util instanceof Object ) { return p(n + "=" + util.inspect(v)); } }
-function exit(v){ if( process instanceof Object ) { process.exit(v); } }
+var util = (typeof require === "function") ? require("util") : (void 0);
+function p(v){ if( typeof console === "object" ) { return console.log(v); } }
+function pp(v){ if( typeof util === "object" ) { return p(util.inspect(v)); } }
+function pv(n,v){ if( typeof util === "object" ) { return p(n + "=" + util.inspect(v)); } }
+function exit(v){ if( typeof process === "object" ) { process.exit(v); } }
 
 function decode(json_obj, json_key)
 {
@@ -128,14 +136,21 @@ JsonObjKey.prototype.decode = function(json_obj){
 		// 変換対象のオブジェクトにより振り分け
 		if( val instanceof Array )
 		{ // 配列の場合
-
 			// 配列としてキーを追加
 			obj[key.name] = [];
-			// 配列内のオブジェクトを再帰decodeして追加していく
-			val.forEach(function(v){
-				obj[key.name].push( key.array.decode(v) );
-			});
-			//!@note json的に配列内に配列がある事は無い
+
+			if("array" in key)
+			{ // // keyがarray持ちならdecode後追加
+				val.forEach(function(v){
+					obj[key.name].push( key.array.decode(v) );
+				});
+			}
+			else
+			{ // // keyがarray持ちで無ければ、ただの配列なのでそのまま追加
+				val.forEach(function(v){
+					obj[key.name].push( v );
+				});
+			}
 		}
 		else if( val instanceof Object )
 		{ // オブジェクトの場合(ArrayもObjectなので次点で確認)
@@ -158,14 +173,19 @@ JsonObjKey.prototype.decode = function(json_obj){
 var json_str = '{ \
 	 "0": 4 \
 	,"1": "honda" \
-	,"2": [ \
-		 {"0": "italy"} \
-		,{"0": "russia"} \
-		] \
-	,"3": { \
+	,"2": { \
 		 "0": "japan" \
-		,"1": "FW" \
+		,"1": "left" \
 	} \
+	,"3": [ \
+		 "FW" \
+		,"MF" \
+		] \
+	,"4": [ \
+		 {"0": "holland", "1": "vvv"} \
+		,{"0": "russia",  "1": "cska"} \
+		,{"0": "italy",   "1": "milan"} \
+		] \
 }';
 //p(json_str);
 
@@ -187,18 +207,20 @@ pp(a);
 */
 
 // 変換するキーを定義
-var plays_key = new JsonObjKey();
-plays_key.add("country");
-
 var info_key = new JsonObjKey();
 info_key.add("from");
-info_key.add("pos");
+info_key.add("foot");
+
+var plays_key = new JsonObjKey();
+plays_key.add("country");
+plays_key.add("team");
 
 var obj_key = new JsonObjKey();
 obj_key.add("number");
 obj_key.add("name");
-obj_key.add_array("plays", plays_key);
 obj_key.add_object("info", info_key);
+obj_key.add("position");
+obj_key.add_array("plays", plays_key);
 
 // 変換してみる
 //var before = decode(obj, obj_key);
@@ -208,8 +230,13 @@ pv("before", before);
 // 結果ちゃんと取れてるか確認
 pv("number", before.number);
 pv("name", before.name);
-before.plays.forEach(function (v) {
-	pv("country", v.country);
-});
 pv("info.from", before.info.from);
-pv("info.pos", before.info.pos);
+pv("info.foot", before.info.foot);
+before.position.forEach(function (v) {
+	pv("position", v);
+});
+before.plays.forEach(function (v) {
+	pv("plays.country", v.country);
+	pv("plays.team", v.team);
+});
+
