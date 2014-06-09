@@ -1,6 +1,7 @@
 json_numeric_key_decoder_js
 ========================
 
+after json string.
 ```text
 { "0": 4, "1": "honda", 
   "2": [ {"0": "italy"}, {"0": "russia"} ], 
@@ -25,6 +26,7 @@ obj_key.add_object("info", info_key);
 var before = obj_key.decode(obj); 
 ```
 
+before json string.
 ```text
 { "number": 4, "name": "honda", 
   "plays": [ {"country": "italy"}, {"country": "russia"} ], 
